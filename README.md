@@ -26,8 +26,8 @@ ffppeg命令部分，为音视频处理小白开发。
 
 ## Dependency
 
-1.Apache Commons Exec ：https://commons.apache.org/proper/commons-exec/
-2.Apache Commons Lang ：https://commons.apache.org/proper/commons-lang/
-3.beautyeye           ：https://gitee.com/jackjiang/beautyeye
-4.Hutool              ：https://www.hutool.cn/
-5.spring-framework    ：https://spring.io/projects/spring-framework
+1.Apache Commons Exec ：https://commons.apache.org/proper/commons-exec/  
+2.Apache Commons Lang ：https://commons.apache.org/proper/commons-lang/  
+3.beautyeye           ：https://gitee.com/jackjiang/beautyeye  
+4.Hutool              ：https://www.hutool.cn/  
+5.spring-framework    ：https://spring.io/projects/spring-framework  
