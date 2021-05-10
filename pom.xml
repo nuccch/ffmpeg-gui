@@ -154,7 +154,9 @@
       </plugins>
     </pluginManagement>
     <plugins>
+      <!-- 如下打包配置针对linux和mac平台 -->
       <!-- 生成jar包时打包资源文件配置 -->
+      <!--
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
@@ -166,8 +168,10 @@
           </excludes>
         </configuration>
       </plugin>
+      -->
 
       <!-- 部署打包: 通过maven-assembly插件压缩为tar包进行发布 -->
+      <!--
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <version>3.0.0</version>
@@ -190,6 +194,55 @@
           </execution>
         </executions>
       </plugin>
+      -->
+
+      <!-- 如下打包配置针对windows平台 -->
+      <!-- 将scope为system的依赖jar包中的class文件解压出来重新打包 -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.0.2</version>
+        <executions>
+          <execution>
+            <id>unpack</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>unpack-dependencies</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <includeScope>system</includeScope>
+          <outputDirectory>${project.build.directory}/classes</outputDirectory>
+        </configuration>
+      </plugin>
+
+      <!-- 打包可独立运行jar包 -->
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.1.0</version>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <archive>
+            <manifest>
+              <!-- 配置main方法入口程序 -->
+              <mainClass>org.chench.extra.ffmpeg.gui.Bootstrap</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
   </build>
 </project>
