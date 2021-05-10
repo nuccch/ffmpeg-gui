@@ -4,6 +4,7 @@ import cn.hutool.core.io.FileUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.chench.extra.ffmpeg.gui.enums.KeyCode;
 import org.chench.extra.ffmpeg.gui.ffmpeg.CmdOutput;
 import org.chench.extra.ffmpeg.gui.ffmpeg.FFProbeHelper;
 
@@ -15,10 +16,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -34,7 +32,9 @@ public class FFProbeShowStreamPanel extends ContainerBase {
     private JTextField pathField;
     private JTextArea outputArea;
     private JTextArea commandArea;
-    private JPopupMenu pm;
+    private JPopupMenu outputPopMenu;
+    private JPopupMenu pathPopMenu;
+    private JMenuItem copyPath;
     private JMenuItem copy;
     private JMenuItem save;
     private Clipboard cboard;
@@ -48,36 +48,70 @@ public class FFProbeShowStreamPanel extends ContainerBase {
         this.pathField.setTransferHandler(transferHandler);
         this.pathField.setToolTipText(getMessage("tooltip.file.path"));
         //this.pathField.setPlaceholder(getMessage("tooltip.file.path"));
+        this.pathField.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if(e.getButton() == MouseEvent.BUTTON3) {
+                    //selectAll.setEnabled(isCanCopy());
+                    copyPath.setEnabled(true);
+                    pathPopMenu.show(pathField, e.getX(), e.getY());
+                }
+            }
+        });
+        this.pathField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (isCopyKey(e)) {
+                    copyPath();
+                }
+            }
+        });
 
         this.outputArea = new JTextArea(20, 10);
         this.outputArea.setTransferHandler(transferHandler);
-        this.outputArea.addMouseListener(new OutputAreaMouseListener());
+        this.outputArea.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if(e.getButton() == MouseEvent.BUTTON3) {
+                    //selectAll.setEnabled(isCanCopy());
+                    copy.setEnabled(true);
+                    save.setEnabled(true);
+                    outputPopMenu.show(outputArea, e.getX(), e.getY());
+                }
+            }
+        });
+        this.outputArea.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (isCopyKey(e)) {
+                    copyOutput();
+                }
+            }
+        });
 
-        // 右键弹出菜单
-        this.pm=new JPopupMenu();
+        // 命令输出右键弹出菜单
+        this.outputPopMenu = new JPopupMenu();
+        // 路径右键菜单
+        this.pathPopMenu = new JPopupMenu();
         // 粘贴板
         this.cboard = getToolkit().getSystemClipboard();
 
-        //复制
-        copy=new JMenuItem(getMessage("menu.item.copy"));
-        copy.addActionListener(new ActionListener(){
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                action(e);
-            }
-        });
+        // 命令输出复制
+        this.copy=new JMenuItem(getMessage("menu.item.copy"));
+        this.copy.addActionListener(e -> action(e));
+        // 路径复制
+        this.copyPath = new JMenuItem(getMessage("menu.item.copy"));
+        this.copyPath.addActionListener(e -> actionPath(e));
 
-        //保存
-        save=new JMenuItem(getMessage("menu.item.save"));
-        save.addActionListener(new ActionListener(){
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                action(e);
-            }
-        });
-        pm.add(copy);
-        pm.add(save);
-        this.outputArea.add(pm);
+        // 命令输出保存
+        this.save=new JMenuItem(getMessage("menu.item.save"));
+        this.save.addActionListener(e -> action(e));
+        this.outputPopMenu.add(copy);
+        this.outputPopMenu.add(save);
+        this.outputArea.add(outputPopMenu);
+
+        this.pathPopMenu.add(copyPath);
+        this.pathField.add(pathPopMenu);
 
         this.commandArea = new JTextArea(2, 10);
         this.commandArea.setEditable(false);
@@ -109,13 +143,14 @@ public class FFProbeShowStreamPanel extends ContainerBase {
                 File file = fileChooser.getSelectedFile();
                 this.lastOpenFileDir = file.getParent();
                 System.out.println("selected file: " + file);
+                this.pathField.setText(file.getAbsolutePath());
                 doCmd(file.getPath());
             }
         });
         buttonPanel.add(selectFileBtn);
 
         JButton saveBtn = new JButton(getMessage("btn.save"));
-        saveBtn.addActionListener(e -> doSave());
+        saveBtn.addActionListener(e -> saveOutput());
         buttonPanel.add(saveBtn);
         panel.add(buttonPanel, BorderLayout.EAST);
         return panel;
@@ -151,32 +186,80 @@ public class FFProbeShowStreamPanel extends ContainerBase {
     }
 
     /**
-     * 右键菜单事情处理
+     * 判断为复制快捷键
+     * @param e
+     * @return
+     */
+    private boolean isCopyKey(KeyEvent e) {
+       return e.getModifiers() == InputEvent.CTRL_MASK && e.getKeyCode() == KeyCode.CODE_C.getCode();
+    }
+
+    /**
+     * 路径右键菜单事件
+     * @param e
+     */
+    private void actionPath(ActionEvent e) {
+        String str = e.getActionCommand();
+        if(str.equals(copy.getText())) {
+            // 复制
+            copyPath();
+        }
+    }
+
+    /**
+     * 命令输出右键菜单事件
      * @param e
      */
     private void action(ActionEvent e) {
         String str = e.getActionCommand();
         if(str.equals(copy.getText())) {
             // 复制
-            this.outputArea.grabFocus();
-            this.outputArea.selectAll();
-            String selection = outputArea.getSelectedText();
-            if (selection == null) {
-                return;
-            }
-            StringSelection clipString =new StringSelection(selection);
-            cboard.setContents(clipString, clipString);
-            //JOptionPane.showMessageDialog(this.getTopLevelAncestor(), "复制成功！");
+            copyOutput();
         } else if(str.equals(save.getText())) {
             // 保存
-            doSave();
+            saveOutput();
         }
+    }
+
+    /**
+     * 复制文件路径
+     */
+    private void copyPath() {
+        this.pathField.grabFocus();
+        String selection = this.pathField.getSelectedText();
+        if (selection == null) {
+            return;
+        }
+        copy2SystemBoard(selection);
+    }
+
+    /**
+     * 复制命令行输出
+     */
+    private void copyOutput() {
+        this.outputArea.grabFocus();
+        //this.outputArea.selectAll();
+        String selection = outputArea.getSelectedText();
+        if (selection == null) {
+            return;
+        }
+        copy2SystemBoard(selection);
+        //JOptionPane.showMessageDialog(this.getTopLevelAncestor(), "复制成功！");
+    }
+
+    /**
+     * 复制到系统粘贴板
+     * @param selection
+     */
+    private void copy2SystemBoard(String selection) {
+        StringSelection clipString = new StringSelection(selection);
+        cboard.setContents(clipString, clipString);
     }
 
     /**
      * 保存命令行输出内容
      */
-    private void doSave() {
+    private void saveOutput() {
         String text = outputArea.getText();
         if (text.length() <= 0) {
             return;
@@ -242,7 +325,7 @@ public class FFProbeShowStreamPanel extends ContainerBase {
                     filepath = filepath.substring(0, filepath.length() - 1);
                 }
                 //System.out.println(filepath);
-                field.setText(filepath);
+                this.field.setText(filepath);
                 if (new File(filepath).isDirectory()) {
                     // 拖动的是文件夹时不做处理
                     return true;
@@ -266,41 +349,6 @@ public class FFProbeShowStreamPanel extends ContainerBase {
                 }
             }
             return false;
-        }
-    }
-
-    /**
-     * 鼠标右键点击事情
-     */
-    class OutputAreaMouseListener implements MouseListener {
-        @Override
-        public void mouseClicked(MouseEvent e) {
-
-        }
-
-        @Override
-        public void mousePressed(MouseEvent e) {
-            if(e.getButton() == MouseEvent.BUTTON3) {
-                //selectAll.setEnabled(isCanCopy());
-                copy.setEnabled(true);
-                save.setEnabled(true);
-                pm.show(outputArea, e.getX(), e.getY());
-            }
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-
-        }
-
-        @Override
-        public void mouseEntered(MouseEvent e) {
-
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e) {
-
         }
     }
 }

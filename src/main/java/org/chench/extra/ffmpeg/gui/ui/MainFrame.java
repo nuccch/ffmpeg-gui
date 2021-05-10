@@ -24,22 +24,23 @@ public class MainFrame extends ContainerBase {
     }
 
     private void initMainFrame() {
-        //UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-        //JFrame.setDefaultLookAndFeelDecorated(true);
-        //UIManager.setLookAndFeel("com.pagosoft.plaf.PgsLookAndFeel");
-
         // You should always work with UI inside Event Dispatch Thread (EDT)
         // That includes installing L&F, creating any Swing components etc.
         SwingUtilities.invokeLater (() -> {
             try {
-                // https://github.com/JackJiang2011/beautyeye
-                //org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper.launchBeautyEyeLNF();
+                String osName = System.getProperty("os.name").toLowerCase();
+                if (osName.contains("windows")) {
+                    // https://github.com/JackJiang2011/beautyeye
+                    //org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper.launchBeautyEyeLNF();
+                    UIManager.put("RootPane.setupButtonVisible", false);
+                    //设置本属性将改变窗口边框样式定义
+                    BeautyEyeLNFHelper.frameBorderStyle = BeautyEyeLNFHelper.FrameBorderStyle.osLookAndFeelDecorated;
+                    BeautyEyeLNFHelper.launchBeautyEyeLNF();
+                } else {
+                    UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+                }
 
-                UIManager.put("RootPane.setupButtonVisible", false);
-
-                //设置本属性将改变窗口边框样式定义
-                BeautyEyeLNFHelper.frameBorderStyle = BeautyEyeLNFHelper.FrameBorderStyle.osLookAndFeelDecorated;
-                BeautyEyeLNFHelper.launchBeautyEyeLNF();
+                //UIManager.setLookAndFeel("com.pagosoft.plaf.PgsLookAndFeel");
 
                 // Install WebLaF as application LaF
                 //WebLookAndFeel.install ();
