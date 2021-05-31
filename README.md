@@ -28,7 +28,7 @@ ffppeg命令部分，为音视频处理小白开发。
 
 https://github.com/mifi/lossless-cut   lossless-cut  
 https://gitee.com/haujet/QuickCut    Quick Cut  
-https://github.com/MattMcManis/Axiom   Axiom 
+https://github.com/MattMcManis/Axiom   Axiom  
 https://github.com/WinFF/winff  winff 
 
 ## Dependency
