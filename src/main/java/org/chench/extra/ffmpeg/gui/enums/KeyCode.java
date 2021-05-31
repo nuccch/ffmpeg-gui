@@ -7,7 +7,8 @@ package org.chench.extra.ffmpeg.gui.enums;
  * @date: 5/10/21
  */
 public enum KeyCode {
-    CODE_C(67);
+    CODE_C(67),
+    CODE_V(86);
 
     private int code;
     KeyCode(int code) {

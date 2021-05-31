@@ -12,10 +12,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +32,7 @@ public class FFProbeShowStreamPanel extends ContainerBase {
     private JPopupMenu outputPopMenu;
     private JPopupMenu pathPopMenu;
     private JMenuItem copyPath;
+    private JMenuItem pastePath;
     private JMenuItem copy;
     private JMenuItem save;
     private Clipboard cboard;
@@ -54,6 +52,7 @@ public class FFProbeShowStreamPanel extends ContainerBase {
                 if(e.getButton() == MouseEvent.BUTTON3) {
                     //selectAll.setEnabled(isCanCopy());
                     copyPath.setEnabled(true);
+                    pastePath.setEnabled(true);
                     pathPopMenu.show(pathField, e.getX(), e.getY());
                 }
             }
@@ -63,6 +62,8 @@ public class FFProbeShowStreamPanel extends ContainerBase {
             public void keyPressed(KeyEvent e) {
                 if (isCopyKey(e)) {
                     copyPath();
+                } else if (isPaste(e)) {
+                    pastePath();
                 }
             }
         });
@@ -102,6 +103,9 @@ public class FFProbeShowStreamPanel extends ContainerBase {
         // 路径复制
         this.copyPath = new JMenuItem(getMessage("menu.item.copy"));
         this.copyPath.addActionListener(e -> actionPath(e));
+        // 粘贴路径
+        this.pastePath = new JMenuItem(getMessage("menu.item.paste"));
+        this.pastePath.addActionListener(e -> actionPath(e));
 
         // 命令输出保存
         this.save=new JMenuItem(getMessage("menu.item.save"));
@@ -111,6 +115,7 @@ public class FFProbeShowStreamPanel extends ContainerBase {
         this.outputArea.add(outputPopMenu);
 
         this.pathPopMenu.add(copyPath);
+        this.pathPopMenu.add(pastePath);
         this.pathField.add(pathPopMenu);
 
         this.commandArea = new JTextArea(2, 10);
@@ -195,6 +200,15 @@ public class FFProbeShowStreamPanel extends ContainerBase {
     }
 
     /**
+     * 判断为粘贴快捷键
+     * @param e
+     * @return
+     */
+    private boolean isPaste(KeyEvent e) {
+        return e.getModifiers() == InputEvent.CTRL_MASK && e.getKeyCode() == KeyCode.CODE_V.getCode();
+    }
+
+    /**
      * 路径右键菜单事件
      * @param e
      */
@@ -203,6 +217,9 @@ public class FFProbeShowStreamPanel extends ContainerBase {
         if(str.equals(copy.getText())) {
             // 复制
             copyPath();
+        } else if (str.equals(pastePath.getText())) {
+            // 粘贴
+            pastePath();
         }
     }
 
@@ -231,6 +248,25 @@ public class FFProbeShowStreamPanel extends ContainerBase {
             return;
         }
         copy2SystemBoard(selection);
+    }
+
+    /**
+     * 粘贴文件路径
+     */
+    private void pastePath() {
+        this.pathField.grabFocus();
+        Transferable transferable = this.cboard.getContents(null);
+        if (transferable != null) {
+            if (transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                try {
+                    // 获取粘贴板中的文本内容
+                    String content = (String)transferable.getTransferData(DataFlavor.stringFlavor);
+                    this.pathField.setText(content);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     /**
