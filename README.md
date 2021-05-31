@@ -2,7 +2,7 @@
 
 ## What
 
-这是一个ffmpeg命令行工具的GUI封装项目。
+这是一个ffmpeg命令行工具的GUI封装项目，对开发者友好的音视频处理工具。
 
 ## Why
 
@@ -23,6 +23,12 @@
 
 ffprobe命令部分，为需要经常使用ffprobe命令工具的开发人员准备。
 ffppeg命令部分，为音视频处理小白开发。
+
+## 已经存在FFmpeg GUI项目  
+
+https://github.com/mifi/lossless-cut   lossless-cut  
+https://gitee.com/haujet/QuickCut    Quick Cut  
+
 
 ## Dependency
 
