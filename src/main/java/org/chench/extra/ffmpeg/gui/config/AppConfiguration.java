@@ -15,6 +15,7 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 public class AppConfiguration {
     @Bean
     MessageSource messageSource() {
+        // 这行注释信息是在web编辑器中添加的
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
         // 指定文件是UTF-8编码:
         messageSource.setDefaultEncoding("UTF-8");
